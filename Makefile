@@ -62,9 +62,9 @@ static: $(STATIC_LIB)
 $(STATIC_LIB):
 	mkdir -p $(RESOURCES_DIR)
 	# Build for arm64
-	CGO_ENABLED=1 GOARCH=arm64 go build -buildmode=c-archive -o $(RESOURCES_DIR)/libenry-arm64.a $(NATIVE_LIB)
+	CGO_ENABLED=1 GOARCH=arm64 go build -ldflags="-s -w" -buildmode=c-archive -o $(RESOURCES_DIR)/libenry-arm64.a $(NATIVE_LIB)
 	# Build for x86_64
-	CGO_ENABLED=1 GOARCH=amd64 go build -buildmode=c-archive -o $(RESOURCES_DIR)/libenry-amd64.a $(NATIVE_LIB)
+	CGO_ENABLED=1 GOARCH=amd64 go build -ldflags="-s -w" -buildmode=c-archive -o $(RESOURCES_DIR)/libenry-amd64.a $(NATIVE_LIB)
 	# Create a fat binary
 	lipo -create -output $(STATIC_LIB) $(RESOURCES_DIR)/libenry-arm64.a $(RESOURCES_DIR)/libenry-amd64.a
 	# Make a copy of the header file without the architecture in the name
