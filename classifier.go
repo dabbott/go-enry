@@ -11,6 +11,7 @@ import (
 // candidates. Candidates is a map which can be used to assign weights to languages dynamically.
 type classifier interface {
 	classify(content []byte, candidates map[string]float64) (languages []string)
+	classifyWithScores(content []byte, candidates map[string]float64) (languages []string, scores []float64)
 }
 
 type naiveBayes struct {
@@ -61,6 +62,49 @@ func (c *naiveBayes) classify(content []byte, candidates map[string]float64) []s
 	}
 
 	return sortLanguagesByScore(scoredLangs)
+}
+
+func (c *naiveBayes) classifyWithScores(content []byte, candidates map[string]float64) ([]string, []float64) {
+	var languages map[string]float64
+	if len(candidates) == 0 {
+		languages = c.knownLangs()
+	} else {
+		languages = make(map[string]float64, len(candidates))
+		for candidate, weight := range candidates {
+			if lang, ok := GetLanguageByAlias(candidate); ok {
+				candidate = lang
+			}
+
+			languages[candidate] = weight
+		}
+	}
+
+	empty := len(content) == 0
+	scoredLangs := make([]*scoredLanguage, 0, len(languages))
+
+	var tokens []string
+	if !empty {
+		tokens = tokenizer.Tokenize(content)
+	}
+
+	for language := range languages {
+		score := c.languagesLogProbabilities[language]
+		if !empty {
+			score += c.tokensLogProbability(tokens, language)
+		}
+		scoredLangs = append(scoredLangs, &scoredLanguage{
+			language: language,
+			score:    score,
+		})
+	}
+
+	sortedLanguages := sortLanguagesByScore(scoredLangs)
+	scores := make([]float64, 0, len(scoredLangs))
+	for _, scoredLang := range scoredLangs {
+		scores = append(scores, scoredLang.score)
+	}
+
+	return sortedLanguages, scores
 }
 
 func sortLanguagesByScore(scoredLangs []*scoredLanguage) []string {

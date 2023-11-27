@@ -1,11 +1,16 @@
+//go:build ((darwin && cgo) || (linux && cgo)) && amd64
 // +build darwin,cgo linux,cgo
 // +build amd64
 
 package main
 
 import "C"
-import "github.com/go-enry/go-enry/v2"
-import "github.com/go-enry/go-enry/v2/data"
+import (
+	"strings"
+
+	"github.com/go-enry/go-enry/v2"
+	"github.com/go-enry/go-enry/v2/data"
+)
 
 //export GetLanguage
 func GetLanguage(filename string, content []byte) string {
@@ -15,6 +20,11 @@ func GetLanguage(filename string, content []byte) string {
 //export GetLanguageByContent
 func GetLanguageByContent(filename string, content []byte) (language string, safe bool) {
 	return enry.GetLanguageByContent(filename, content)
+}
+
+//export GetLanguageByClassifier
+func GetLanguageByClassifier(content []byte, candidates string) (language string, safe bool, score float64) {
+	return enry.GetLanguageByClassifier(content, strings.Split(candidates, ","))
 }
 
 //export GetLanguageByEmacsModeline

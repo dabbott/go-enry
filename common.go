@@ -97,8 +97,16 @@ func GetLanguageByContent(filename string, content []byte) (language string, saf
 
 // GetLanguageByClassifier returns the most probably language detected for the given content. It uses
 // defaultClassifier, if no candidates are provided it returns OtherLanguage.
-func GetLanguageByClassifier(content []byte, candidates []string) (language string, safe bool) {
-	return getLanguageByStrategy(GetLanguagesByClassifier, "", content, candidates)
+func GetLanguageByClassifier(content []byte, candidates []string) (language string, safe bool, score float64) {
+	// return getLanguageByStrategy(GetLanguagesByClassifier, "", content, candidates)
+
+	languages, scores := getLanguagesBySpecificClassifierWithScores(content, candidates, defaultClassifier)
+
+	if len(languages) == 0 {
+		return OtherLanguage, false, 0
+	}
+
+	return languages[0], len(languages) == 1, scores[0]
 }
 
 func getLanguageByStrategy(strategy Strategy, filename string, content []byte, candidates []string) (string, bool) {
@@ -480,6 +488,23 @@ func GetLanguagesByContent(filename string, content []byte, _ []string) []string
 	}
 
 	return heuristic.Match(content)
+}
+
+// GetLanguagesByClassifier returns a sorted slice of possible languages ordered by
+// decreasing language's probability. If there are not candidates it returns nil.
+// It is a Strategy that uses a pre-trained defaultClassifier.
+func GetLanguagesByClassifierWithScores(filename string, content []byte, candidates []string) (languages []string, scores []float64) {
+	return getLanguagesBySpecificClassifierWithScores(content, candidates, defaultClassifier)
+}
+
+// getLanguagesBySpecificClassifier returns a slice of possible languages. It takes in a Classifier to be used.
+func getLanguagesBySpecificClassifierWithScores(content []byte, candidates []string, classifier classifier) (languages []string, scores []float64) {
+	mapCandidates := make(map[string]float64)
+	for _, candidate := range candidates {
+		mapCandidates[candidate]++
+	}
+
+	return classifier.classifyWithScores(content, mapCandidates)
 }
 
 // GetLanguagesByClassifier returns a sorted slice of possible languages ordered by

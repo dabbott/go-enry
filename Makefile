@@ -57,10 +57,17 @@ $(LINUX_SHARED_LIB):
 	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -buildmode=c-shared -o $(LINUX_SHARED_LIB) $(NATIVE_LIB) && \
 	mv $(LINUX_DIR)/$(HEADER_FILE) $(RESOURCES_DIR)/$(HEADER_FILE)
 
-
 static: $(STATIC_LIB)
 
 $(STATIC_LIB):
-	CGO_ENABLED=1 go build -buildmode=c-archive -o $(STATIC_LIB) $(NATIVE_LIB)
+	mkdir -p $(RESOURCES_DIR)
+	# Build for arm64
+	CGO_ENABLED=1 GOARCH=arm64 go build -buildmode=c-archive -o $(RESOURCES_DIR)/libenry-arm64.a $(NATIVE_LIB)
+	# Build for x86_64
+	CGO_ENABLED=1 GOARCH=amd64 go build -buildmode=c-archive -o $(RESOURCES_DIR)/libenry-amd64.a $(NATIVE_LIB)
+	# Create a fat binary
+	lipo -create -output $(STATIC_LIB) $(RESOURCES_DIR)/libenry-arm64.a $(RESOURCES_DIR)/libenry-amd64.a
+	# Make a copy of the header file without the architecture in the name
+	cp $(RESOURCES_DIR)/libenry-arm64.h $(RESOURCES_DIR)/$(HEADER_FILE)
 
 .PHONY: benchmarks benchmarks-samples benchmarks-slow
