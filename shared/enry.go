@@ -11,10 +11,10 @@ import (
 	"github.com/go-enry/go-enry/v2"
 )
 
-// //export GetLanguage
-// func GetLanguage(filename string, content []byte) string {
-// 	return enry.GetLanguage(filename, content)
-// }
+//export GetLanguage
+func GetLanguage(filename string, content []byte) string {
+	return enry.GetLanguage(filename, content)
+}
 
 // //export GetLanguageByContent
 // func GetLanguageByContent(filename string, content []byte) (language string, safe bool) {
